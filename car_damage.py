@@ -7,6 +7,7 @@ import os
 from torchvision.io import read_image
 from torch.utils.data import Dataset
 import pandas as pd
+from common import DAMAGE_TO_NUM_MAP
 
 np.random.seed(42)
 
@@ -25,9 +26,7 @@ NUM_CLASSES = 8
 class CustomImageDataset(Dataset):
     def __init__(self, df, transform=None, target_transform=None):
         self.df = df
-        di = {'unknown': 0, 'door_scratch': 1, 'head_lamp': 2, 'glass_shatter': 3, 'tail_lamp': 4, 'bumper_dent': 5,
-              'door_dent': 6, 'bumper_scratch': 7}
-        self.df['class_d'] = self.df['class'].map(di)
+        self.df['class_d'] = self.df['class'].map(DAMAGE_TO_NUM_MAP)
         self.transform = transform
         self.target_transform = target_transform
 

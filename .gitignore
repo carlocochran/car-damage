@@ -5,3 +5,4 @@ cifar_net.pth
 classifier.py
 resnet50.py
 .DS_Store
+*.pth

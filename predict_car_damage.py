@@ -2,14 +2,12 @@ import torch
 import torch.nn as nn
 import torchvision
 from torchvision.io import read_image
+from common import NUM_TO_DAMAGE_MAP
 
 BASE_DIR = './'
 MODEL_NAME = BASE_DIR + 'car_damage_0.01_0.3.pth'
-IMAGE_NAME = BASE_DIR + 'preprocessed/image/146.jpeg'
+IMAGE_NAME = BASE_DIR + 'preprocessed/image/158.jpeg'
 NUM_CLASSES = 8
-
-di = {0: 'unknown', 1: 'door_scratch', 2: 'head_lamp', 3: 'glass_shatter', 4: 'tail_lamp', 5: 'bumper_dent',
-      6: 'door_dent', 7: 'bumper_scratch'}
 
 net = torchvision.models.resnet50()
 net.fc = nn.Linear(2048, NUM_CLASSES)
@@ -20,4 +18,4 @@ image = torch.unsqueeze(image, dim=0)
 outputs = net(image)
 _, predicted = torch.max(outputs, 1)
 
-print(predicted)
+print(NUM_TO_DAMAGE_MAP[predicted.item()])
