@@ -10,16 +10,14 @@ import pandas as pd
 
 np.random.seed(42)
 
-DATA_PATH = './preprocessed/'
+DATA_PATH = '/content/drive/MyDrive/Colab Notebooks/ignite//preprocessed/'
 TRAINING_PCT = 0.7
 VALIDATION_PCT = 0.15
 TEST_PCT = 0.15
-BATCH_SIZE = 128
-# LEARNING_RATE = 0.001
-LEARNING_RATE_RANGE = [0.01, 0.001]
-# MOMENTUM = 0.9
-MOMENTUM_RANGE = [0.5, 0.9]
-EPOCH = 2
+BATCH_SIZE = 64
+LEARNING_RATE_RANGE = [0.01]
+MOMENTUM_RANGE = [0.3]
+EPOCH = 50
 NUM_CLASSES = 8
 
 class CustomImageDataset(Dataset):
@@ -52,8 +50,8 @@ train, validate, test = np.split(df.sample(frac=1),
 for LEARNING_RATE in LEARNING_RATE_RANGE:
     for MOMENTUM in MOMENTUM_RANGE:
         print('Learning Rate: {:f}, Momentum: {:f}'.format(LEARNING_RATE, MOMENTUM))
-        net = torchvision.models.resnet18()
-        net.fc = nn.Linear(512, NUM_CLASSES)
+        net = torchvision.models.resnet50()
+        net.fc = nn.Linear(2048, NUM_CLASSES)
         if torch.cuda.is_available():
             net = net.cuda()
         criterion = nn.CrossEntropyLoss()
