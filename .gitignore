@@ -1,7 +1,6 @@
 preprocessed/
 data/
 .idea/
-__pycache__/
 cifar_net.pth
 classifier.py
 resnet50.py
