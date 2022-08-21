@@ -10,14 +10,16 @@ import pandas as pd
 
 np.random.seed(42)
 
-DATA_PATH = '/content/drive/MyDrive/Colab Notebooks/ignite//preprocessed/'
+#BASE_DIR = '/content/drive/MyDrive/Colab Notebooks/ignite/'
+BASE_DIR = './'
+DATA_PATH = BASE_DIR + 'preprocessed/'
 TRAINING_PCT = 0.7
 VALIDATION_PCT = 0.15
 TEST_PCT = 0.15
 BATCH_SIZE = 64
 LEARNING_RATE_RANGE = [0.01]
 MOMENTUM_RANGE = [0.3]
-EPOCH = 50
+EPOCH = 1
 NUM_CLASSES = 8
 
 class CustomImageDataset(Dataset):
@@ -49,6 +51,7 @@ train, validate, test = np.split(df.sample(frac=1),
 
 for LEARNING_RATE in LEARNING_RATE_RANGE:
     for MOMENTUM in MOMENTUM_RANGE:
+        MODEL_NAME = BASE_DIR + 'car_damage_{}_{}.pth'.format(LEARNING_RATE, MOMENTUM)
         print('Learning Rate: {:f}, Momentum: {:f}'.format(LEARNING_RATE, MOMENTUM))
         net = torchvision.models.resnet50()
         net.fc = nn.Linear(2048, NUM_CLASSES)
@@ -96,3 +99,6 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
             print('Epoch: {:d}, Learning Rate: {:f}, Momentum: {:f}, Accuracy: {:f}, Training Loss: {:f}, Validation Loss: {:f}'
                   .format(epoch+1, LEARNING_RATE, MOMENTUM, (validation_acc/len(validate.index)).item(),
                   training_running_loss, validation_running_loss))
+
+
+        torch.save(net.state_dict(), MODEL_NAME)
