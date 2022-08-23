@@ -7,3 +7,4 @@ dependencies:
   - matplotlib=3.4.2
   - pyyaml=5.4.1
   - pandas=1.4.3
+  - flask
