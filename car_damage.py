@@ -11,16 +11,17 @@ from common import DAMAGE_TO_NUM_MAP
 
 np.random.seed(42)
 
-#BASE_DIR = '/content/drive/MyDrive/Colab Notebooks/ignite/'
-BASE_DIR = './'
+BASE_DIR = '/content/drive/MyDrive/Colab Notebooks/ignite/'
+#BASE_DIR = './'
 DATA_PATH = BASE_DIR + 'preprocessed/'
 TRAINING_PCT = 0.7
 VALIDATION_PCT = 0.15
 TEST_PCT = 0.15
 BATCH_SIZE = 64
-LEARNING_RATE_RANGE = [0.01]
+LEARNING_RATE_RANGE = [0.001]
 MOMENTUM_RANGE = [0.3]
-EPOCH = 1
+EPOCH = 1000
+SNAPSHOT_EPOCH = 100
 NUM_CLASSES = 8
 
 class CustomImageDataset(Dataset):
@@ -50,7 +51,6 @@ train, validate, test = np.split(df.sample(frac=1),
 
 for LEARNING_RATE in LEARNING_RATE_RANGE:
     for MOMENTUM in MOMENTUM_RANGE:
-        MODEL_NAME = BASE_DIR + 'car_damage_{}_{}.pth'.format(LEARNING_RATE, MOMENTUM)
         print('Learning Rate: {:f}, Momentum: {:f}'.format(LEARNING_RATE, MOMENTUM))
         net = torchvision.models.resnet50()
         net.fc = nn.Linear(2048, NUM_CLASSES)
@@ -79,7 +79,7 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
                 training_loss.backward()
                 optimizer.step()
                 training_running_loss += training_loss.item()
-                print(f'[{epoch + 1}, {i + 1:5d}] training loss: {training_running_loss}')
+                # print(f'[{epoch + 1}, {i + 1:5d}] training loss: {training_running_loss}')
 
             validation_running_loss = 0.0
             for i, data in enumerate(validateloader, 0):
@@ -91,7 +91,7 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
                 outputs = net(inputs)
                 validation_loss = criterion(outputs, labels)
                 validation_running_loss += validation_loss.item()
-                print(f'[{epoch + 1}, {i + 1:5d}] validation loss: {validation_running_loss}')
+                # print(f'[{epoch + 1}, {i + 1:5d}] validation loss: {validation_running_loss}')
                 _, predicted = torch.max(outputs, 1)
                 validation_acc += torch.sum(predicted == labels)
 
@@ -99,5 +99,7 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
                   .format(epoch+1, LEARNING_RATE, MOMENTUM, (validation_acc/len(validate.index)).item(),
                   training_running_loss, validation_running_loss))
 
-
-        torch.save(net.state_dict(), MODEL_NAME)
+            if (epoch+1) % SNAPSHOT_EPOCH == 0:
+                MODEL_NAME = BASE_DIR + 'car_damage_{}_{}_{}.pth'.format(LEARNING_RATE, MOMENTUM, epoch+1)
+                print('creating snapshot {}'.format(MODEL_NAME))
+                torch.save(net.state_dict(), MODEL_NAME)
