@@ -11,8 +11,8 @@ from common import DAMAGE_TO_NUM_MAP
 
 np.random.seed(42)
 
-BASE_DIR = '/content/drive/MyDrive/Colab Notebooks/ignite/'
-#BASE_DIR = './'
+#BASE_DIR = '/content/drive/MyDrive/Colab Notebooks/ignite/'
+BASE_DIR = './'
 DATA_PATH = BASE_DIR + 'preprocessed/'
 TRAINING_PCT = 0.7
 VALIDATION_PCT = 0.15
@@ -20,6 +20,7 @@ TEST_PCT = 0.15
 BATCH_SIZE = 64
 LEARNING_RATE_RANGE = [0.001]
 MOMENTUM_RANGE = [0.3]
+WEIGHT_DECAY = 1e-4
 EPOCH = 1000
 SNAPSHOT_EPOCH = 100
 NUM_CLASSES = 8
@@ -51,13 +52,13 @@ train, validate, test = np.split(df.sample(frac=1),
 
 for LEARNING_RATE in LEARNING_RATE_RANGE:
     for MOMENTUM in MOMENTUM_RANGE:
-        print('Learning Rate: {:f}, Momentum: {:f}'.format(LEARNING_RATE, MOMENTUM))
+        print('Learning Rate: {:f}, Momentum: {:f}, Weight Decay: {:f}'.format(LEARNING_RATE, MOMENTUM, WEIGHT_DECAY))
         net = torchvision.models.resnet50()
         net.fc = nn.Linear(2048, NUM_CLASSES)
         if torch.cuda.is_available():
             net = net.cuda()
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
+        optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM, weight_decay=WEIGHT_DECAY)
 
         trainset = CustomImageDataset(train)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False)

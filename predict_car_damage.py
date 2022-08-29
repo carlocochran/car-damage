@@ -11,7 +11,7 @@ import base64
 import io
 
 BASE_DIR = './'
-MODEL_NAME = BASE_DIR + 'car_damage_0.01_0.3.pth'
+MODEL_NAME = BASE_DIR + 'car_damage_0.001_0.3_1000.pth'
 IMAGE_NAME = BASE_DIR + 'preprocessed/image/0.jpeg'
 NUM_CLASSES = 8
 RESIZE_HEIGHT = 224
