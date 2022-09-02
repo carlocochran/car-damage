@@ -80,7 +80,7 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
                 training_loss.backward()
                 optimizer.step()
                 training_running_loss += training_loss.item()
-                # print(f'[{epoch + 1}, {i + 1:5d}] training loss: {training_running_loss}')
+                print(f'[{epoch + 1}, {i + 1:5d}] training loss: {training_running_loss}')
 
             validation_running_loss = 0.0
             for i, data in enumerate(validateloader, 0):
@@ -92,8 +92,10 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
                 outputs = net(inputs)
                 validation_loss = criterion(outputs, labels)
                 validation_running_loss += validation_loss.item()
-                # print(f'[{epoch + 1}, {i + 1:5d}] validation loss: {validation_running_loss}')
+                print(f'[{epoch + 1}, {i + 1:5d}] validation loss: {validation_running_loss}')
                 _, predicted = torch.max(outputs, 1)
+                print('{}: predicted: {}'.format(i, predicted))
+                print('{}: labels: {}'.format(i, labels))
                 validation_acc += torch.sum(predicted == labels)
 
             print('Epoch: {:d}, Learning Rate: {:f}, Momentum: {:f}, Accuracy: {:f}, Training Loss: {:f}, Validation Loss: {:f}'
