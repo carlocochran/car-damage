@@ -138,10 +138,14 @@ def main(num_samples=10, max_num_epochs=EPOCH, cpus_per_trial=1, gpus_per_trial=
     load_data(data_dir)
     checkpoint_dir = BASE_DIR
     config = {
-        'lr': tune.loguniform(1e-5, 1e-1),
-        'momentum': tune.choice([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
+        # 'lr': tune.loguniform(1e-5, 1e-1),
+        # 'momentum': tune.choice([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
+        # 'batch_size': tune.choice([64]),
+        # 'weight_decay': tune.choice([0])
+        'lr': tune.choice([0.0030455243141441434]),
+        'momentum': tune.choice([0.15, 0.17, 0.19, 0.2, 0.21, 0.22, 0.23]),
         'batch_size': tune.choice([64]),
-        'weight_decay': tune.choice([0])
+        'weight_decay': tune.choice([0, 0.1, 0.01, 0.001, 0.0001, 0.00001])
     }
 
     scheduler = ASHAScheduler(

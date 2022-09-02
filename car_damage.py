@@ -18,9 +18,9 @@ TRAINING_PCT = 0.7
 VALIDATION_PCT = 0.15
 TEST_PCT = 0.15
 BATCH_SIZE = 64
-LEARNING_RATE_RANGE = [0.001]
-MOMENTUM_RANGE = [0.3]
-WEIGHT_DECAY = 1e-4
+LEARNING_RATE_RANGE = [0.0030455243141441434]
+MOMENTUM_RANGE = [0.22]
+WEIGHT_DECAY = 0.01
 EPOCH = 1000
 SNAPSHOT_EPOCH = 100
 NUM_CLASSES = 8
@@ -69,6 +69,7 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
         for epoch in range(EPOCH):
             training_running_loss = 0.0
             validation_acc = 0
+            train_steps = 0
             for i, data in enumerate(trainloader, 0):
                 inputs, labels = data
                 if torch.cuda.is_available():
@@ -80,9 +81,11 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
                 training_loss.backward()
                 optimizer.step()
                 training_running_loss += training_loss.item()
+                train_steps += 1
                 print(f'[{epoch + 1}, {i + 1:5d}] training loss: {training_running_loss}')
 
             validation_running_loss = 0.0
+            val_steps = 0
             for i, data in enumerate(validateloader, 0):
                 inputs, labels = data
                 if torch.cuda.is_available():
@@ -92,15 +95,16 @@ for LEARNING_RATE in LEARNING_RATE_RANGE:
                 outputs = net(inputs)
                 validation_loss = criterion(outputs, labels)
                 validation_running_loss += validation_loss.item()
+                val_steps += 1
                 print(f'[{epoch + 1}, {i + 1:5d}] validation loss: {validation_running_loss}')
                 _, predicted = torch.max(outputs, 1)
-                print('{}: predicted: {}'.format(i, predicted))
-                print('{}: labels: {}'.format(i, labels))
+                # print('{}: predicted: {}'.format(i, predicted))
+                # print('{}: labels: {}'.format(i, labels))
                 validation_acc += torch.sum(predicted == labels)
 
             print('Epoch: {:d}, Learning Rate: {:f}, Momentum: {:f}, Accuracy: {:f}, Training Loss: {:f}, Validation Loss: {:f}'
                   .format(epoch+1, LEARNING_RATE, MOMENTUM, (validation_acc/len(validate.index)).item(),
-                  training_running_loss, validation_running_loss))
+                          (training_running_loss/train_steps), (validation_running_loss/val_steps)))
 
             if (epoch+1) % SNAPSHOT_EPOCH == 0:
                 MODEL_NAME = BASE_DIR + 'car_damage_{}_{}_{}.pth'.format(LEARNING_RATE, MOMENTUM, epoch+1)
