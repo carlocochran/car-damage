@@ -14,20 +14,23 @@ from custom_image_dataset import CustomImageDataset
 
 np.random.seed(42)
 BASE_DIR = '/content/drive/MyDrive/Colab Notebooks/ignite/'
-# BASE_DIR = '/Users/carlo/Documents/workspace/ignite/'
+#BASE_DIR = '/Users/carlo/Documents/workspace/ignite/'
 DATA_PATH = BASE_DIR + 'preprocessed/'
 TRAINING_PCT = 0.85
 TEST_PCT = 0.15
 VALIDATION_PCT = 0.2
 NUM_CLASSES = 8
 EPOCH = 50
+SNAPSHOT_EPOCH = 5
 NUM_WORKERS = 2
 NUM_CPU = 0
 NUM_GPU = 1
-SAMPLES = 20
+SAMPLES = 1
+#WEIGHTS = 'IMAGENET1K_V1'
+WEIGHTS = 'DEFAULT'
 
 
-def load_data(data_dir='./'):
+def load_data(data_dir=DATA_PATH):
     df = pd.read_csv(data_dir + 'index.csv')
     train, test = np.split(df.sample(frac=1), [int(TRAINING_PCT * len(df))])
     trainset = CustomImageDataset(train, path=DATA_PATH)
@@ -35,8 +38,9 @@ def load_data(data_dir='./'):
     return trainset, testset
 
 def create_model():
-    net = torchvision.models.resnet50()
-    net.fc = nn.Linear(2048, NUM_CLASSES)
+    net = torchvision.models.resnet152(weights=WEIGHTS)
+    final_fc = nn.Linear(2048, NUM_CLASSES)
+    net.fc = final_fc
     return net
 
 def train_model(config, checkpoint_dir=None, data_dir=None):
@@ -46,7 +50,8 @@ def train_model(config, checkpoint_dir=None, data_dir=None):
         net = net.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=config['lr'], momentum=config['momentum'], weight_decay=config['weight_decay'])
+    optimizer = optim.SGD(net.parameters(), lr=config['lr'], momentum=config['momentum'],
+                          weight_decay=config['weight_decay'])
 
     if checkpoint_dir:
         model_state, optimizer_state = torch.load(os.path.join(checkpoint_dir, "checkpoint"))
@@ -107,9 +112,10 @@ def train_model(config, checkpoint_dir=None, data_dir=None):
 
             correct += torch.sum(predicted == labels)
 
-        with tune.checkpoint_dir(epoch) as checkpoint_dir:
-            path = os.path.join(checkpoint_dir, "checkpoint")
-            torch.save((net.state_dict(), optimizer.state_dict()), path)
+        if (epoch % SNAPSHOT_EPOCH) == 0:
+            with tune.checkpoint_dir(epoch) as checkpoint_dir:
+                path = os.path.join(checkpoint_dir, "checkpoint")
+                torch.save((net.state_dict(), optimizer.state_dict()), path)
 
         # print('********correct:{}, vallen: {}, valsteps: {}'.format(correct, len(val_subset), val_steps))
 
@@ -140,52 +146,57 @@ def main(num_samples=10, max_num_epochs=EPOCH, cpus_per_trial=1, gpus_per_trial=
     config = {
         # 'lr': tune.loguniform(1e-5, 1e-1),
         # 'momentum': tune.choice([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
-        # 'batch_size': tune.choice([64]),
+        # 'batch_size': tune.choice([32]),
         # 'weight_decay': tune.choice([0])
-        'lr': tune.choice([0.0030455243141441434]),
-        'momentum': tune.choice([0.15, 0.17, 0.19, 0.2, 0.21, 0.22, 0.23]),
-        'batch_size': tune.choice([64]),
-        'weight_decay': tune.choice([0, 0.1, 0.01, 0.001, 0.0001, 0.00001])
+        # 'lr': tune.choice([0.09738633019266778]),
+        # 'momentum': tune.choice([0.08, 0.09, 0.1, 0.11, 0.12]),
+        # 'batch_size': tune.choice([32]),
+        # 'weight_decay': tune.choice([0, 0.1, 0.01, 0.001, 0.0001, 0.00001])
+        'lr': tune.choice([0.00682791]),
+        'momentum': tune.choice([0.6]),
+        'batch_size': tune.choice([32]),
+        'weight_decay': tune.choice([0])
     }
 
-    scheduler = ASHAScheduler(
-        metric="loss",
-        mode="min",
-        max_t=max_num_epochs,
-        grace_period=1,
-        reduction_factor=2)
-
-    reporter = CLIReporter(
-        metric_columns=["loss", "accuracy", "training_iteration"])
-
-    result = tune.run(
-        partial(train_model, checkpoint_dir=checkpoint_dir, data_dir=data_dir),
-        resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
-        config=config,
-        num_samples=num_samples,
-        scheduler=scheduler,
-        progress_reporter=reporter)
-
-    best_trial = result.get_best_trial("loss", "min", "last")
-    print("Best trial config: {}".format(best_trial.config))
-    print("Best trial final validation loss: {}".format(
-        best_trial.last_result["loss"]))
-    print("Best trial final validation accuracy: {}".format(
-        best_trial.last_result["accuracy"]))
-
+    # scheduler = ASHAScheduler(
+    #     metric='loss',
+    #     mode='min',
+    #     max_t=max_num_epochs,
+    #     grace_period=1,
+    #     reduction_factor=2)
+    #
+    # reporter = CLIReporter(
+    #     metric_columns=['loss', 'accuracy', 'training_iteration'])
+    #
+    # result = tune.run(
+    #     partial(train_model, checkpoint_dir=checkpoint_dir, data_dir=data_dir),
+    #     resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
+    #     config=config,
+    #     num_samples=num_samples,
+    #     scheduler=scheduler,
+    #     progress_reporter=reporter)
+    #
+    # best_trial = result.get_best_trial("loss", "min", "last")
+    # print("Best trial config: {}".format(best_trial.config))
+    # print("Best trial final validation loss: {}".format(
+    #     best_trial.last_result["loss"]))
+    # print("Best trial final validation accuracy: {}".format(
+    #     best_trial.last_result["accuracy"]))
+    #
     best_trained_model = create_model()
     if torch.cuda.is_available():
         if gpus_per_trial > 1:
             best_trained_model = nn.DataParallel(best_trained_model)
         best_trained_model = best_trained_model.cuda()
 
-    # best_checkpoint_dir = best_trial.checkpoint.value
-    # model_state, optimizer_state = torch.load(os.path.join(
-    #     best_checkpoint_dir, "checkpoint"))
-    # best_trained_model.load_state_dict(model_state)
-    #
-    # test_acc = test_accuracy(best_trained_model)
-    # print("Best trial test set accuracy: {}".format(test_acc))
+    best_checkpoint_dir = '/root/ray_results/train_model_2022-09-08_20-15-52/train_model_09a8b_00000_0_batch_size=32,lr=0.0068,momentum=0.6000,weight_decay=0_2022-09-08_20-15-53/checkpoint_000045'
+    model_state, optimizer_state = torch.load(os.path.join(
+        best_checkpoint_dir, "checkpoint"))
+    best_trained_model.load_state_dict(model_state)
+    best_trained_model.eval()
+
+    test_acc = test_accuracy(best_trained_model)
+    print("Best trial test set accuracy: {}".format(test_acc))
 
 
 if __name__ == "__main__":

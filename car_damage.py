@@ -53,7 +53,7 @@ train, validate, test = np.split(df.sample(frac=1),
 for LEARNING_RATE in LEARNING_RATE_RANGE:
     for MOMENTUM in MOMENTUM_RANGE:
         print('Learning Rate: {:f}, Momentum: {:f}, Weight Decay: {:f}'.format(LEARNING_RATE, MOMENTUM, WEIGHT_DECAY))
-        net = torchvision.models.resnet50()
+        net = torchvision.models.resnet152()
         net.fc = nn.Linear(2048, NUM_CLASSES)
         if torch.cuda.is_available():
             net = net.cuda()

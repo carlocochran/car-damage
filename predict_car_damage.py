@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms as T
+import torch.nn.functional as F
 # from torchvision.utils import save_image
 # from torchvision.io import read_image
 from PIL import Image
@@ -11,17 +12,23 @@ import base64
 import io
 
 BASE_DIR = './'
-MODEL_NAME = BASE_DIR + 'car_damage_0.01_0.3.pth'
-IMAGE_NAME = BASE_DIR + 'preprocessed/image/9.jpeg'
+#BASE_DIR = '/content/drive/MyDrive/Colab Notebooks/ignite/'
+MODEL_NAME = BASE_DIR + 'checkpoint_0.0068_0.6_0_32_45.pth'
+IMAGE_NAME = BASE_DIR + 'preprocessed/image/52.jpeg'
 NUM_CLASSES = 8
 RESIZE_HEIGHT = 224
 RESIZE_WIDTH = 224
+#WEIGHTS = 'IMAGENET1K_V1'
+WEIGHTS = 'DEFAULT'
 transform = T.Resize((RESIZE_HEIGHT, RESIZE_WIDTH))
 
 def predict(encoded_string):
-    net = torchvision.models.resnet50()
-    net.fc = nn.Linear(2048, NUM_CLASSES)
-    net.load_state_dict(torch.load(MODEL_NAME, map_location=torch.device('cpu')))
+    net = torchvision.models.resnet152(pretrained=True)
+    final_fc = nn.Linear(2048, NUM_CLASSES)
+    net.fc = final_fc
+    model_state, optimizer_state = torch.load(MODEL_NAME, map_location=torch.device('cpu'))
+    net.load_state_dict(model_state)
+    net.eval()
 
     base64_decoded = base64.b64decode(encoded_string)
     img = Image.open(io.BytesIO(base64_decoded))
